@@ -36,14 +36,14 @@ jobs:
 
       - name: Build zip
         run: |
-          mkdir -p dist
-          # Zip the repo contents inside a DragToClone folder so Cura can find
-          # the plugin after manual extraction.
-          zip -r dist/DragToClone.zip . \
-            --exclude "*.git*" \
-            --exclude "*.DS_Store" \
-            --exclude "*__pycache__*" \
-            --exclude "dist/*"
+          mkdir -p dist staging/DragToClone
+          # Copy plugin files into a DragToClone/ subfolder so the zip contains
+          # DragToClone/plugin.json at its root, which is what Cura expects.
+          rsync -a --exclude='.git' --exclude='__pycache__' --exclude='.github' \
+            --exclude='.DS_Store' --exclude='dist' --exclude='staging' \
+            . staging/DragToClone/
+          cd staging
+          zip -r ../dist/DragToClone.zip DragToClone/
 
       - name: Create release
         env:
