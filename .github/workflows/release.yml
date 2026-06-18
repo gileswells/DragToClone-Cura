@@ -43,7 +43,7 @@ jobs:
             --exclude='.DS_Store' --exclude='dist' --exclude='staging' \
             . staging/DragToClone/
           cd staging
-          zip -r ../dist/DragToClone.zip DragToClone/
+          zip -r "../dist/DragToClone-v${{ inputs.version }}.zip" DragToClone/
 
       - name: Create release
         env:
@@ -51,7 +51,7 @@ jobs:
         run: |
           NOTES=$(cat changelog.txt)
           gh release create "v${{ inputs.version }}" \
-            dist/DragToClone.zip \
+            "dist/DragToClone-v${{ inputs.version }}.zip" \
             --title "v${{ inputs.version }}" \
             --notes "## What's changed
 
