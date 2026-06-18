@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g. 1.0.0)"
+        required: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changes since last release
+        id: changelog
+        run: |
+          LAST_TAG=$(git tag --sort=-creatordate | head -1)
+          if [ -z "$LAST_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"- %s")
+          else
+            COMMITS=$(git log "${LAST_TAG}..HEAD" --pretty=format:"- %s")
+          fi
+          if [ -z "$COMMITS" ]; then
+            COMMITS="- No changes recorded"
+          fi
+          echo "$COMMITS" > changelog.txt
+
+      - name: Build zip
+        run: |
+          mkdir -p dist
+          # Zip the repo contents inside a DragToClone folder so Cura can find
+          # the plugin after manual extraction.
+          zip -r dist/DragToClone.zip . \
+            --exclude "*.git*" \
+            --exclude "*.DS_Store" \
+            --exclude "*__pycache__*" \
+            --exclude "dist/*"
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NOTES=$(cat changelog.txt)
+          gh release create "v${{ inputs.version }}" \
+            dist/DragToClone.zip \
+            --title "v${{ inputs.version }}" \
+            --notes "## What's changed
+
+          ${NOTES}"
